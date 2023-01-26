@@ -16,34 +16,62 @@ with open('coord.csv', 'r') as csv_file:
 #plt.plot(x_arr, y_arr)
 #plt.show()
 
-#creating necessary functions
-c1, c2, x, y = symbols('c1 c2 x y')
-r_func = c1*cos(x) + c2*sin(x)
+#creating necessary symbols and functions
+n = 2
+x, y = symbols('x y')
+symb_arr = list()
+func_arr = list()
+for i in range(n):
+  symb_arr.append(symbols('c' + str(i)))
+
+func_arr.append(sin(x))
+func_arr.append(cos(x))
+
+#creating fucntions
+r_func = None
+for i in range(n):
+  r_func += symb_arr[i]*func_arr[i]
 i_func = y - r_func
 
 #solving df
-c1_df = diff(r_func, c1)
-print(c1_df)
-c2_df = diff(r_func, c2)
-print(c2_df)
-slu = solve([c1_df, c2_df], c1, c2, dict=True)
+c_df_arr = list()
+for i in range(n):
+  c_df_arr.append(diff(r_func, symb_arr[i]))
+slu = solve(c_df_arr, symb_arr, dict=True)
 print(slu)
 
-#checking if correct
-det_min2 = Matrix([[diff(c1_df, c1), diff(c1_df, c2)], [diff(c2_df, c1), diff(c2_df, c2)]]).det()
-det_min1 = diff(c1_df, c1)
+#checking if koefs are correct
+det_min_arr = list()
+matrx = None
+for i in range(n):
+  t_arr = list()
+  for j in range(n):
+    t_arr.append(diff(c_df_arr[i], symb_arr[j]))
+  matrx.append(t_arr)
 
-print(det_min1, det_min2)
+for z in range(n):
+  temp_matrx = list()
+  for i in range(n-1, -1, -1):
+    t_arr = list()
+    for j in range(n-1, -1, -1):
+      t_arr.append(diff(c_df_arr[i-z], symb_arr[j]))
+    temp_matrx.append(t_arr)[::-1]
+  det_min_arr.append(Matrix(temp_matrx).det())
 
 res = 0
+t_arr = list()
+for j in range(len(slu)):
+  t_arr.append(slu[symb_arr[i]])
 for i in range(len(x_arr)):
-  t = i_func(slu[c1], slu[c2], x_arr[i], y_arr[i])
-  if t < 0:
+  t1_func = i_func(y_arr[i])
+  t2_func = t1_func(t_arr)
+  t_res = t2_func(x_arr[i])
+  if t_res < 0:
     print('ERROR!')
     break
   else:
-    res += t
+    res += t_res
 
 #show the graphics
-plot(r_func(slu['c1'], slu['c2']))
+plot(r_func(t_arr))
 
