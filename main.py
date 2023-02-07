@@ -1,4 +1,4 @@
-from sympy import diff, symbols, cos, sin, Function, Derivative, solve, Matrix, plot
+from sympy import diff, symbols, cos, sin, Function, Derivative, solve, Matrix, plot, expand
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
@@ -17,29 +17,39 @@ with open('coord.csv', 'r') as csv_file:
 #plt.show()
 
 #creating necessary symbols and functions
-n = 2
+n = 6
 x, y = symbols('x y')
+
 symb_arr = list()
 func_arr = list()
-for i in range(n):
+for i in range((n-1)*n + 1):
   symb_arr.append(symbols('c' + str(i)))
 
-func_arr.append(sin(x))
-func_arr.append(cos(x))
+for i in range(1, n+1):
+  func_arr.append(sin(x**(i+1)))
+  func_arr.append(sin(i*x))
+  func_arr.append(cos(x**(i+1)))
+  func_arr.append(cos(i*x))
+  #func_arr.append(1/x)
+  func_arr.append(x**i)
+func_arr.append(1)
 
 #creating fucntions
-r_func = None
-for i in range(n):
+r_func = 1
+for i in range(len(symb_arr)):
   r_func += symb_arr[i]*func_arr[i]
-i_func = y - r_func
+i_func = expand((y - r_func)**2)
+print(i_func)
 
 #solving df
 c_df_arr = list()
-for i in range(n):
+for i in range(len(symb_arr)):
   c_df_arr.append(diff(r_func, symb_arr[i]))
-slu = solve(c_df_arr, symb_arr, dict=True)
+print(c_df_arr)
+slu = solve(c_df_arr, symb_arr, dict=True, check=False)
 print(slu)
 
+'''
 #checking if koefs are correct
 det_min_arr = list()
 matrx = None
@@ -48,7 +58,6 @@ for i in range(n):
   for j in range(n):
     t_arr.append(diff(c_df_arr[i], symb_arr[j]))
   matrx.append(t_arr)
-
 for z in range(n):
   temp_matrx = list()
   for i in range(n-1, -1, -1):
@@ -57,7 +66,6 @@ for z in range(n):
       t_arr.append(diff(c_df_arr[i-z], symb_arr[j]))
     temp_matrx.append(t_arr)[::-1]
   det_min_arr.append(Matrix(temp_matrx).det())
-
 res = 0
 t_arr = list()
 for j in range(len(slu)):
@@ -71,7 +79,6 @@ for i in range(len(x_arr)):
     break
   else:
     res += t_res
-
 #show the graphics
 plot(r_func(t_arr))
-
+'''
