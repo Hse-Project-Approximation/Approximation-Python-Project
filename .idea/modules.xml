@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Flask Graph Web Visualisation.iml" filepath="$PROJECT_DIR$/.idea/Flask Graph Web Visualisation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/SciPy.iml" filepath="$PROJECT_DIR$/.idea/SciPy.iml" />
     </modules>
   </component>
 </project>
