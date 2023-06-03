@@ -1,84 +1,155 @@
-from sympy import diff, symbols, cos, sin, Function, Derivative, solve, Matrix, plot, expand
-import matplotlib.pyplot as plt
+# from scipy.optimize import curve_fit
 import numpy as np
+import sympy as sp
+from numpy import array, exp, sin, cos, tan, linalg
+import matplotlib.pyplot as plt
 import csv
 
-#read coordinates
+# Парсинг координат из CSV файла
 x_arr, y_arr = np.array(list()), np.array(list())
-with open('coord.csv', 'r') as csv_file:
-  csv_reader = csv.reader(csv_file)
-  for line in csv_reader:
-    t = ''.join(line).split(';')
-    x_arr = np.append(x_arr, t[0])
-    y_arr = np.append(y_arr, t[1])
+with open('shel.csv', 'r') as csv_file:
+    csv_reader = csv.reader(csv_file)
+    for line in csv_reader:
+        t = ''.join(line).split(';')
+        x_arr = np.append(x_arr, t[0]).astype('f')
+        y_arr = np.append(y_arr, t[1]).astype('f')
 
-#show the raw graphics
-#plt.plot(x_arr, y_arr)
-#plt.show()
 
-#creating necessary symbols and functions
-n = 6
-x, y = symbols('x y')
+def ed(i):
+    return 1
 
-symb_arr = list()
-func_arr = list()
-for i in range((n-1)*n + 1):
-  symb_arr.append(symbols('c' + str(i)))
 
-for i in range(1, n+1):
-  func_arr.append(sin(x**(i+1)))
-  func_arr.append(sin(i*x))
-  func_arr.append(cos(x**(i+1)))
-  func_arr.append(cos(i*x))
-  #func_arr.append(1/x)
-  func_arr.append(x**i)
-func_arr.append(1)
+def sq(i):
+    return i ** 2
 
-#creating fucntions
-r_func = 1
-for i in range(len(symb_arr)):
-  r_func += symb_arr[i]*func_arr[i]
-i_func = expand((y - r_func)**2)
-print(i_func)
 
-#solving df
-c_df_arr = list()
-for i in range(len(symb_arr)):
-  c_df_arr.append(diff(r_func, symb_arr[i]))
-print(c_df_arr)
-slu = solve(c_df_arr, symb_arr, dict=True, check=False)
-print(slu)
+def kub(i):
+    return i ** 3
 
-'''
-#checking if koefs are correct
-det_min_arr = list()
-matrx = None
-for i in range(n):
-  t_arr = list()
-  for j in range(n):
-    t_arr.append(diff(c_df_arr[i], symb_arr[j]))
-  matrx.append(t_arr)
-for z in range(n):
-  temp_matrx = list()
-  for i in range(n-1, -1, -1):
-    t_arr = list()
-    for j in range(n-1, -1, -1):
-      t_arr.append(diff(c_df_arr[i-z], symb_arr[j]))
-    temp_matrx.append(t_arr)[::-1]
-  det_min_arr.append(Matrix(temp_matrx).det())
-res = 0
-t_arr = list()
-for j in range(len(slu)):
-  t_arr.append(slu[symb_arr[i]])
-for i in range(len(x_arr)):
-  t1_func = i_func(y_arr[i])
-  t2_func = t1_func(t_arr)
-  t_res = t2_func(x_arr[i])
-  if t_res < 0:
-    print('ERROR!')
-    break
-  else:
-    res += t_res
-#show the graphics
-plot(r_func(t_arr))
-'''
+
+def ob(i):
+    return i ** (-1)
+
+
+def pokv2(i):
+    return 2 ** i
+
+
+def pokn2(i):
+    return 2 ** (-i)
+
+
+def ns(i):
+    return i
+
+
+def log(i):
+    return np.log(i + 1)
+
+
+# funlist = [np.cos, np.sin, ed, sq, ns, pokn2] #улевой минор
+funlist = [np.cos, np.sin, ed, sq, ns, log]
+x = list()
+for i in range(len(funlist)):
+    x.append(sp.symbols("C" + str(i + 1)))
+
+su = 0
+for i in range(len(y_arr)):
+    kv = 0
+    for j in range(len(x)):
+        kv = kv + x[j] * funlist[j](i + 1)
+    su = su + (kv - y_arr[i]) ** 2
+print(su, '\n')
+
+di = []
+for i in range(len(x)):
+    di.append(sp.diff(su, x[i]))
+print(di, '\n')
+resh = sp.solve(di, x)
+
+mat = np.zeros((len(x), len(x)))
+for i in range(len(x)):
+    for j in range(len(x)):
+        for g in range(len(y_arr)):
+            mat[i, j] = mat[i, j] + 2 * funlist[i](y_arr[g]) * funlist[j](y_arr[g])
+
+print(mat, '\n')
+
+
+# Функция для проверки матрицы на детерминанты нулевых миноров
+def check_minors(matrix):
+    status = True
+    for k in range(len(matrix)):
+        lst = [[matrix[i][j] for j in range(k + 1)] for i in range(k + 1)]
+        if linalg.det(lst) == 0:
+            print('Детерминант минора:', lst, 'равен нулю, решение невозможно')
+            status = False
+        else:
+            continue
+    if status:
+        print('Нет нулевых миноров, выполняем аппроксимцию\n')
+    else:
+        exit()
+
+
+# Проверяем матрицу
+check_minors(mat)
+
+
+# Функция для поиска доверительного интервала
+def find_trusted_interval(y_arr):
+    m = sum(y_arr) / len(y_arr)
+    s = 0
+    for i in y_arr:
+        s += (i - m) ** 2
+    D = s / (len(y_arr) + 1)
+    return m + 3 * D ** (1 / 2), m - 3 * D ** (1 / 2)
+
+
+# Считаем доверительный интервал
+print("Доверительный интервал: ", find_trusted_interval(y_arr), '\n')
+mmin, mmax = find_trusted_interval(y_arr)
+
+# Задаём интервал графика
+graph_range = int(
+    input('Введите промежуток (одно число, т.к. начинаем отрисовку с нуля), на котором вы хотите рассмотреть график: '))
+x_arr_new = np.array(list())
+for i in range(graph_range):
+    x_arr_new = np.append(x_arr_new, i).astype('f')
+
+progn = graph_range - len(y_arr)
+status = False
+results = np.zeros(progn)
+for i in range(progn):
+    for j in range(len(resh)):
+        results[i] = results[i] + resh[x[j]] * funlist[j](i + len(y_arr))
+    if (results[i] < mmin or results[i] > mmax):
+        status = True
+# print(results, '\n')
+# print(status, '\n')
+#if (status):
+    #print("predicted meanings are in normal distribution", '\n')
+#else:
+    #print("predicted meanings are in normal distribution", '\n')
+
+status = False
+preresults = np.zeros(len(y_arr) + progn)
+for i in range(len(preresults)):
+    for j in range(len(resh)):
+        preresults[i] = preresults[i] + resh[x[j]] * funlist[j](i)
+    if (preresults[i] < mmin or preresults[i] > mmax):
+        status = True
+# print(results, '\n')
+# print(status, '\n')
+#if (status):
+    #print("predicted meanings are in normal distribution", '\n')
+#else:
+    #print("predicted meanings are in normal distribution", '\n')
+
+# Выводим график получившейся функции, с подставленными значениями аргументов и начальные данные
+plt.plot(x_arr_new, preresults)
+plt.plot(x_arr, y_arr, 'bo')  # чтобы вернуть отрисовку линией, убрать 'bo'
+plt.xlabel('x')
+plt.ylabel('y')
+plt.grid(True)
+plt.show()
