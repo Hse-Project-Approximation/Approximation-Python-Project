@@ -109,7 +109,6 @@ def openFile():
     # Получаем значения аргументов
     arguments = list(map(float, args))
 
-    # Function to read and print the value in Entry widget
     def print_graph():
         graph_range = int(entry.get())
         x_arr_new = np.array(list())
